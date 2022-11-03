@@ -1,0 +1,47 @@
+# Author: Claire Gregg
+
+version: '2'
+services:
+  cloud_provider:
+    build:
+      dockerfile:
+        server/Dockerfile
+    networks:
+      cloud:
+        ipv4_address: 172.30.16.8
+
+  employee:
+    build:
+      dockerfile:
+        client/Dockerfile
+    networks:
+      home:
+        ipv4_address: 192.168.17.17
+    depends_on:
+      - cloud_provider
+
+  gateway:
+    build:
+      dockerfile:
+        forwarders/Dockerfile
+    networks:
+      home:
+        ipv4_address: 192.168.17.254
+      cloud:
+        ipv4_address: 172.30.2.5
+    depends_on:
+      - cloud_provider
+
+networks:
+  home:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.17.0/24
+  cloud:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.30.0.0/16
