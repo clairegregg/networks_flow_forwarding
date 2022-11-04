@@ -6,6 +6,7 @@ services:
     build:
       dockerfile:
         server/Dockerfile
+    command: ["FFEEDDCCBBAA"]
     networks:
       cloud:
         ipv4_address: 172.30.16.8
@@ -14,6 +15,7 @@ services:
     build:
       dockerfile:
         client/Dockerfile
+    command: ["AABBCCDDEEFF"] # Endpoint ID in hex
     networks:
       home:
         ipv4_address: 192.168.17.17

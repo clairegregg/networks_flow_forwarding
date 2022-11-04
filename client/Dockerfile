@@ -1,5 +1,4 @@
 # Author: Claire Gregg
-
 FROM python:latest
 
 ADD client/client.py /client/

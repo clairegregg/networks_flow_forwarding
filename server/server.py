@@ -4,7 +4,11 @@
 # byte number (I'll go for 6 byte number)"
 
 import socket
-print("Server running")
+import sys 
+
+elementId = sys.argv[1] # First argument after command
+print("Element ID is {}".format(elementId))
+
 localIP = "172.30.16.8"
 localPort = 54321
 bufferSize = 1024

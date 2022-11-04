@@ -2,14 +2,21 @@
  
 import socket
 
+# Destination : Gateway
+routingTable = {
+    "192.168.17.254": "", # This is in that network
+    "192.168.17.0": "192.168.17.0",
+    "172.30.16.8": "172.30.16.8",
+    bytes.fromhex("FFEEDDCCBBAA"): "172.30.16.8"
+}
+
 print("Forwarder running")
-localIP = "192.168.17.254"
-localPort = 54321
+address = ("", 54321)
 bufferSize = 1024
 
 UDPForwarderSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-UDPForwarderSocket.bind((localIP, localPort))
-serverAddressPort = ("172.30.16.8", 54321)
+UDPForwarderSocket.bind(address)
+#serverAddressPort = ("172.30.16.8", 54321)
 
 print("UDP forwarder up and listening")
 
@@ -23,6 +30,9 @@ while True:
 
     print(msg)
     print(IP)
+    destination = message[0:6]
+    print("Destination is {}".format(destination))
+    destinationAddress = (routingTable[destination], 54321)
 
     # Sending a reply to the client
-    UDPForwarderSocket.sendto(message, serverAddressPort)
+    UDPForwarderSocket.sendto(message, destinationAddress)
