@@ -4,13 +4,15 @@ import sys
 
 # Destination : Gateway
 routingTable = {
-    "192.168.17.0": "", # This is in that network
-    "192.168.17.254" : "192.168.17.254",
     bytes.fromhex("FFEEDDCCBBAA"): "192.168.17.254"
 }
-elementId = bytes.fromhex(sys.argv[1]) # First argument after command
-address = ("", 54321)
 
+elementId = bytes.fromhex(sys.argv[1]) # First argument after command is ID
+# Add all IP addresses this element can access
+for i in range(2,len(sys.argv)):
+    routingTable[sys.argv[i]] = sys.argv[i]
+
+address = ("", 54321)
 wantsToGoTo = bytes.fromhex("FFEEDDCCBBAA")
 
 msg = "Msg From Client"

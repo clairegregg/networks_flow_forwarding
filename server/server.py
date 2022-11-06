@@ -6,18 +6,21 @@
 import socket
 import sys 
 
+routingTable = {}
+
 elementId = sys.argv[1] # First argument after command
 print("Element ID is {}".format(elementId))
+for i in range(2,len(sys.argv)):
+    routingTable[sys.argv[i]] = sys.argv[i]
 
-localIP = "172.30.16.8"
-localPort = 54321
+address = ("", 54321)
 bufferSize = 1024
 
 msgFromServer = "Message from Server"
 bytesToSend = str.encode(msgFromServer)
 
 UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-UDPServerSocket.bind((localIP, localPort))
+UDPServerSocket.bind(address)
 
 print("UDP ingress server up and listening")
 

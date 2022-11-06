@@ -6,7 +6,8 @@ services:
     build:
       dockerfile:
         server/Dockerfile
-    command: ["FFEEDDCCBBAA"]
+    # Appends the application id, then any IP addresses this element can access
+    command: ["FFEEDDCCBBAA", "172.30.2.5"]
     networks:
       cloud:
         ipv4_address: 172.30.16.8
@@ -15,7 +16,8 @@ services:
     build:
       dockerfile:
         client/Dockerfile
-    command: ["AABBCCDDEEFF"] # Endpoint ID in hex
+    # Appends the application id, then any IP addresses this element can access
+    command: ["AABBCCDDEEFF", "192.168.17.254"] # Endpoint ID in hex
     networks:
       home:
         ipv4_address: 192.168.17.17
@@ -26,6 +28,8 @@ services:
     build:
       dockerfile:
         forwarders/Dockerfile
+    # Appends any IP addresses this element can access
+    command: ["192.168.17.17", "172.30.16.8"] # Endpoint ID in hex
     networks:
       home:
         ipv4_address: 192.168.17.254

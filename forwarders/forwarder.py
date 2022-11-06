@@ -1,14 +1,16 @@
 # Passes along message with endpoint IDing where it's going 
  
 import socket
+import sys
 
 # Destination : Gateway
 routingTable = {
-    "192.168.17.254": "", # This is in that network
-    "192.168.17.0": "192.168.17.0",
-    "172.30.16.8": "172.30.16.8",
     bytes.fromhex("FFEEDDCCBBAA"): "172.30.16.8"
 }
+
+# Add all IP addresses this element can access
+for i in range(1,len(sys.argv)):
+    routingTable[sys.argv[i]] = sys.argv[i]
 
 print("Forwarder running")
 address = ("", 54321)
