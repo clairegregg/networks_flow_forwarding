@@ -8,11 +8,8 @@ import sys
 
 routingTable = {}
 
-elementId = sys.argv[1] # First argument after command
-print("Element ID is {}".format(elementId))
-for i in range(2,len(sys.argv)):
-    routingTable[sys.argv[i]] = sys.argv[i]
-
+elementId = bytes.fromhex(sys.argv[1]) # First argument after command
+gatewayIp = sys.argv[2] # Get gateway IP address
 address = ("", 54321)
 bufferSize = 1024
 
