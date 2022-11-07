@@ -6,17 +6,19 @@ services:
     build:
       dockerfile:
         server/Dockerfile
-    # Appends the application id, then the gateway, then any IP addresses this element can access
+    # Appends the application id
     command: ["FFEEDDCCBBAA", "172.30.2.5"]
     networks:
       cloud:
         ipv4_address: 172.30.16.8
+    depends_on:
+      - gateway
 
   employee:
     build:
       dockerfile:
         client/Dockerfile
-    # Appends the application id, then the gateway, then any IP addresses this element can access
+    # Appends the application id
     command: ["AABBCCDDEEFF", "192.168.17.254"] # Endpoint ID in hex
     networks:
       home:
@@ -30,14 +32,12 @@ services:
       dockerfile:
         forwarders/Dockerfile
     # Appends any IP addresses this element can access
-    command: ["192.168.17.17", "172.30.16.8"] # Endpoint ID in hex
+    command: ["192.168.17.17", "172.30.16.8"]
     networks:
-      home:
-        ipv4_address: 192.168.17.254
       cloud:
         ipv4_address: 172.30.2.5
-    depends_on:
-      - cloud_provider
+      home:
+        ipv4_address: 192.168.17.254
 
 networks:
   home:

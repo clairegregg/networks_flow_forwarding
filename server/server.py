@@ -5,25 +5,23 @@
 
 import socket
 import sys 
-
-routingTable = {}
+import lib
 
 elementId = bytes.fromhex(sys.argv[1]) # First argument after command
 gatewayIp = sys.argv[2] # Get gateway IP address
-address = ("", 54321)
-bufferSize = 1024
-
-msgFromServer = "Message from Server"
-bytesToSend = str.encode(msgFromServer)
+gatewayAddress = (gatewayIp, lib.forwardingPort)
+address = ("", lib.forwardingPort)
 
 UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 UDPServerSocket.bind(address)
 
-print("UDP ingress server up and listening")
+lib.send_declaration(gatewayAddress, elementId, UDPServerSocket)
+
+print("UDP server up and listening")
 
 # Listen for incoming messages
 while True:
-    bytesAddressPair = UDPServerSocket.recvfrom(bufferSize)
+    bytesAddressPair = UDPServerSocket.recvfrom(lib.bufferSize)
     message = bytesAddressPair[0]
     address = bytesAddressPair[1]
     msg = "Message from client/worker: {}".format(message)

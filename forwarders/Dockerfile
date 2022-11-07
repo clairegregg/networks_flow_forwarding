@@ -3,7 +3,7 @@
 FROM python:latest
 
 ADD forwarders/forwarder.py /forwarder/
-#COPY forwarding_service.py /forwarder/
+COPY lib.py /forwarder/
 
 WORKDIR /forwarder/
 EXPOSE 54321/udp

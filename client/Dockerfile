@@ -2,7 +2,8 @@
 FROM python:latest
 
 ADD client/client.py /client/
-#COPY forwarding_service.py /employee/
+COPY lib.py /client/
+
 
 WORKDIR /client/
 

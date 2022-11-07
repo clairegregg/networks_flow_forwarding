@@ -2,39 +2,69 @@
  
 import socket
 import sys
+import lib
+import multiprocessing
+
+def deal_with_declaration(routingTable, message, address):
+    routingTable[message[1:7]] = address[0]
+
+def forward(sock, routingTable):
+    while True:
+        bytesAddressPair = sock.recvfrom(lib.bufferSize)
+        message = bytesAddressPair[0]
+        address = bytesAddressPair[1]
+        givenIp = socket.gethostbyname(socket.gethostname())
+        print("Forwarder socket bound to {}".format(givenIp))
+
+        msg = "Message from client: {}".format(message)
+        IP = "Client address: {}".format(address)
+
+        if message[0] == 1:
+            deal_with_declaration(routingTable, message, address)
+            print("Dealing with declaration from {}".format(address))
+            continue
+
+        print(msg)
+        print(IP)
+        destination = message[1:7]
+        print("Destination is {}".format(destination))
+        if destination not in routingTable:
+            print("Dropping packet to destination {} as that destination is not registered".format(destination))
+            continue
+
+        destinationAddress = (routingTable[destination], 54321)
+        # Sending a reply to the client
+        sock.sendto(message, destinationAddress)
+        print("Sent message onto {}".format(destinationAddress))
+
+def add_port_and_forward(givenIp, routingTable):
+    sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+    otherIP = lib.gateways[givenIp]
+    print("Other IP is {}".format(otherIP))
+    sock.bind((otherIP, 54321))
+    forward(sock, routingTable)
+
+manager = multiprocessing.Manager()
 
 # Destination : Gateway
-routingTable = {
-    bytes.fromhex("FFEEDDCCBBAA"): "172.30.16.8"
-}
+routingTable = manager.dict()
 
 # Add all IP addresses this element can access
 for i in range(1,len(sys.argv)):
     routingTable[sys.argv[i]] = sys.argv[i]
 
 print("Forwarder running")
-address = ("", 54321)
 bufferSize = 1024
+givenIp = socket.gethostbyname(socket.gethostname())
+print("Forwarder socket bound to {}".format(givenIp))
+address = (givenIp, 54321)
 
 UDPForwarderSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 UDPForwarderSocket.bind(address)
-#serverAddressPort = ("172.30.16.8", 54321)
+
+process = multiprocessing.Process(target=add_port_and_forward,args=(givenIp,routingTable))
+process.start()
 
 print("UDP forwarder up and listening")
 
-# Listen for incoming messages
-while True:
-    bytesAddressPair = UDPForwarderSocket.recvfrom(bufferSize)
-    message = bytesAddressPair[0]
-    address = bytesAddressPair[1]
-    msg = "Message from client: {}".format(message)
-    IP = "Client address: {}".format(address)
-
-    print(msg)
-    print(IP)
-    destination = message[0:6]
-    print("Destination is {}".format(destination))
-    destinationAddress = (routingTable[destination], 54321)
-
-    # Sending a reply to the client
-    UDPForwarderSocket.sendto(message, destinationAddress)
+forward(UDPForwarderSocket, routingTable)

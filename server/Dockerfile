@@ -3,7 +3,7 @@
 FROM python:latest
 
 ADD server/server.py /server/
-#COPY forwarding_service.py /server/
+COPY lib.py /server/
 
 WORKDIR /server/
 

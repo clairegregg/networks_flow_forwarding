@@ -1,20 +1,20 @@
 # Sends request
 import socket
 import sys
+import lib
+import time
 
-bufferSize = 1024
 elementId = bytes.fromhex(sys.argv[1]) # First argument after command is ID
 gatewayIp = sys.argv[2]
-
-wantsToGoTo = bytes.fromhex("FFEEDDCCBBAA")
-
-msg = "Msg From Client"
-header = wantsToGoTo+elementId
-bytesToSend = header + str.encode(msg)
 gatewayAddress = (gatewayIp, 54321)
-
 UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-UDPClientSocket.sendto(bytesToSend, gatewayAddress)
+UDPClientSocket.bind(("", lib.forwardingPort))
 
-# msgFromServer = UDPClientSocket.recvfrom(bufferSize)
-# print("Message from Server".format(msgFromServer))
+lib.send_declaration(gatewayAddress, elementId, UDPClientSocket)
+
+time.sleep(5)
+
+payload = "Msg From Client".encode()
+destination = bytes.fromhex("FFEEDDCCBBAA")
+print("Sending message")
+lib.send_packet(gatewayAddress, elementId, destination, UDPClientSocket, payload)
