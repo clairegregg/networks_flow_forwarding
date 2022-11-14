@@ -1,54 +1,65 @@
+
 # Author: Claire Gregg
 
 version: '2'
 services:
-  cloud_provider:
-    build:
-      dockerfile:
-        server/Dockerfile
-    # Appends the application id
-    command: ["FFEEDDCCBBAA", "172.30.2.5"]
-    networks:
-      cloud:
-        ipv4_address: 172.30.16.8
-    depends_on:
-      - gateway
 
-  employee:
-    build:
-      dockerfile:
-        client/Dockerfile
-    # Appends the application id
-    command: ["AABBCCDDEEFF", "192.168.17.254"] # Endpoint ID in hex
-    networks:
-      home:
-        ipv4_address: 192.168.17.17
-    depends_on:
-      - cloud_provider
-      - gateway
+    employee:
+        build:
+            dockerfile:
+                client/Dockerfile
+        # Appends the application id and gateway
+        command: ["AABBCCDDEEFF", "192.168.17.254"]
+        networks:
+            home:
+                ipv4_address: 192.168.17.17
+        depends_on:
+            - gateway
+            - cloud_provider
 
-  gateway:
-    build:
-      dockerfile:
-        forwarders/Dockerfile
-    # Appends any IP addresses this element can access
-    command: ["192.168.17.17", "172.30.16.8"]
-    networks:
-      cloud:
-        ipv4_address: 172.30.2.5
-      home:
-        ipv4_address: 192.168.17.254
+    cloud_provider:
+        build:
+            dockerfile:
+                server/Dockerfile
+        # Appends the application id and gateway
+        command: ["FFEEDDCCBBAA", "172.30.2.5"]
+        networks:
+            cloud:
+                ipv4_address: 172.30.16.8
+        depends_on:
+                - gateway
+
+    gateway:
+        build:
+            dockerfile:
+                client/Dockerfile
+        # Appends any IP addresses this element can access
+        command: ["192.168.17.17","172.30.16.8"]
+        networks:
+            home:
+                ipv4_address: 192.168.17.254
+            cloud:
+                ipv4_address: 172.30.2.5
+        depends_on:
+            - tcpdump
+    
+    tcpdump:
+        image: kaazing/tcpdump
+        network_mode: "host"
+        volumes:
+            - ./tcpdump:/tcpdump
+        command: ["-i", "any", "udp", "-w", "tcpdump/tcpdump.pcap"] 
 
 networks:
-  home:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 192.168.17.0/24
-  cloud:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.30.0.0/16
+    home:
+        driver: bridge
+        ipam:
+            driver: default
+            config:
+                - subnet: 192.168.17.0/24
+    cloud:
+        driver: bridge
+        ipam:
+            driver: default
+            config:
+                - subnet: 172.30.0.0/16
