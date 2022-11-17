@@ -32,7 +32,7 @@ services:
     gateway:
         build:
             dockerfile:
-                client/Dockerfile
+                forwarders/Dockerfile
         # Appends any IP addresses this element can access
         command: ["192.168.17.17","172.30.16.8"]
         networks:

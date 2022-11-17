@@ -68,7 +68,7 @@ for gateway in gateways:
     {name}:
         build:
             dockerfile:
-                client/Dockerfile
+                forwarders/Dockerfile
         # Appends any IP addresses this element can access
         command: [""".format(name = gateway[0])
     for index in range(3, len(gateway)):
