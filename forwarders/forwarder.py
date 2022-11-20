@@ -7,8 +7,46 @@ import multiprocessing
 
 def deal_with_declaration(routingTable, routingTableLock, message, address):
     routingTableLock.acquire()
-    routingTable[message[1:7]] = address[0]
+    localRoutingTable = routingTable
+    localRoutingTable[message[1:7]] = address[0]
+    routingTable = localRoutingTable
     routingTableLock.release()
+
+def find_controller(ip):
+    ipSplit = ip.split(".")
+    ipPrefix = ipSplit[0] + "." + ipSplit[1] + "." + ipSplit[2]
+
+    ipAddress = ""
+    for ipC in lib.controller_ip_addresses:
+        if ipC.startswith(ipPrefix):
+            ipAddress = ipC
+            break
+    
+    if ipAddress == "":
+        ipPrefix = ipSplit[0] + "." + ipSplit[1]
+        for ipC in lib.controller_ip_addresses:
+            if ipC.startswith(ipPrefix):
+                ipAddress = ipC
+                break
+
+    return ipAddress
+        
+
+def declare_node(sock, routingTable, sockIp, ip2):
+    controllerIp = find_controller(sockIp)
+    if controllerIp == "":
+        # Should not get here
+        print("Error: No valid controller")
+        return
+    
+    message = lib.declarationMask.to_bytes(1, 'big') + lib.ip_address_to_bytes(sockIp) + lib.ip_address_to_bytes(ip2)
+    localRoutingTable = dict(routingTable)
+    for ip in localRoutingTable:
+        message += lib.ip_address_to_bytes(ip)
+    
+    print("Sending declaration to {}".format(controllerIp))
+    sock.sendto(message, (controllerIp, lib.forwardingPort))
+
 
 def forward(sock, routingTable, routingTableLock):
     while True:
@@ -44,6 +82,8 @@ def add_port_and_forward(givenIp, routingTable, routingTableLock):
     otherIP = lib.gateways[givenIp]
     print("Other IP is {}".format(otherIP))
     sock.bind((otherIP, 54321))
+
+    declare_node(sock, routingTable, otherIP, givenIp)
     forward(sock, routingTable, routingTableLock)
 
 manager = multiprocessing.Manager()

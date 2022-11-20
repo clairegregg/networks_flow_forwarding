@@ -1,3 +1,5 @@
+import lib
+
 employees = [
     # (name, id, gateway, network, ip address)
     ("employee", "AABBCCDDEEFF", "192.168.17.254", "home", "192.168.17.17")
@@ -14,7 +16,7 @@ gateways = [
 ]
 
              # ip address in each network in order
-controller = ("192.168.17.2", "172.30.1.2")
+controller = lib.controller_ip_addresses
 
 networks = [
     # (name, subnet)
@@ -22,13 +24,15 @@ networks = [
     ("cloud", "172.30.0.0/16")
 ]
 
-
 output = """
 # Author: Claire Gregg
 
 version: '2'
 services:
 """
+ #############
+ ### USERS ###
+ #############
 
 for employee in employees:
     output += """
@@ -50,6 +54,10 @@ for employee in employees:
     for server in servers:
         output += "            - {}\n".format(server[0])
 
+ ###############
+ ### SERVERS ###
+ ###############
+
 for server in servers:
     output += """
     {name}:
@@ -68,6 +76,9 @@ for server in servers:
     for gateway in gateways:
         output += "            - {}\n".format(gateway[0])
 
+ ##################
+ ### FORWARDERS ###
+ ##################
 
 for gateway in gateways:
     output += """
@@ -94,10 +105,20 @@ for gateway in gateways:
     """
     output += "\n"
 
+ ##################
+ ### CONTROLLER ###
+ ##################
+
 output += """    controller:
         build:
             dockerfile:
                 controller/Dockerfile
+        command: ["""
+for val in controller:
+    output += '"{}",'.format(val)
+output = output[:-1]
+
+output += """]
         networks:
 """
 for index in range(0,len(controller)):
@@ -105,6 +126,10 @@ for index in range(0,len(controller)):
 output += """        depends_on:
             - tcpdump
     """
+
+ ###############
+ ### TCPDUMP ###
+ ###############
 
 output += """
     tcpdump:
@@ -114,6 +139,10 @@ output += """
             - ./tcpdump:/tcpdump
         command: ["-i", "any", "udp", "-w", "tcpdump/tcpdump.pcap"] 
 """
+
+ ################
+ ### NETWORKS ###
+ ################
 
 output += "\nnetworks:"
 
@@ -125,6 +154,10 @@ for network in networks:
             driver: default
             config:
                 - subnet: {ip}""".format(name=network[0], ip=network[1])
+
+ ##############
+ ### OUTPUT ###
+ ##############
 print(output)
 f = open("docker-compose.yml", "w")
 f.write(output)

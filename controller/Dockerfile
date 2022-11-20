@@ -2,7 +2,7 @@
 FROM python:latest
 
 ADD controller/controller.py /controller/
-#COPY forwarding_service.py /employee/
+COPY lib.py /controller/
 
 WORKDIR /controller/
 

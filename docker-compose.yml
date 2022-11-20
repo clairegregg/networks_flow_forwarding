@@ -50,6 +50,7 @@ services:
         build:
             dockerfile:
                 controller/Dockerfile
+        command: ["192.168.17.2","172.30.1.2"]
         networks:
             home:
                 ipv4_address: 192.168.17.2

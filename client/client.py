@@ -6,7 +6,7 @@ import time
 
 elementId = bytes.fromhex(sys.argv[1]) # First argument after command is ID
 gatewayIp = sys.argv[2]
-gatewayAddress = (gatewayIp, 54321)
+gatewayAddress = (gatewayIp, lib.forwardingPort)
 UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 UDPClientSocket.bind(("", lib.forwardingPort))
 
