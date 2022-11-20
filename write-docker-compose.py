@@ -13,11 +13,15 @@ gateways = [
     ("gateway", "192.168.17.254", "172.30.2.5", "192.168.17.17", "172.30.16.8")
 ]
 
+             # ip address in each network in order
+controller = ("192.168.17.2", "172.30.1.2")
+
 networks = [
     # (name, subnet)
     ("home", "192.168.17.0/24"),
     ("cloud", "172.30.0.0/16")
 ]
+
 
 output = """
 # Author: Claire Gregg
@@ -38,6 +42,7 @@ for employee in employees:
             {network}:
                 ipv4_address: {ip}
         depends_on:
+            - controller
 """.format(name = employee[0], id = employee[1], 
             gateway = employee[2], network = employee[3], ip = employee[4])
     for gateway in gateways:
@@ -57,7 +62,8 @@ for server in servers:
             {network}:
                 ipv4_address: {ip}
         depends_on:
-    """.format(name = server[0], id = server[1], 
+            - controller
+""".format(name = server[0], id = server[1], 
             gateway = server[2], network = server[3], ip = server[4])
     for gateway in gateways:
         output += "            - {}\n".format(gateway[0])
@@ -84,10 +90,24 @@ for gateway in gateways:
     output += """
         depends_on:
             - tcpdump
+            - controller
     """
     output += "\n"
 
-output += """    tcpdump:
+output += """    controller:
+        build:
+            dockerfile:
+                controller/Dockerfile
+        networks:
+"""
+for index in range(0,len(controller)):
+    output += "            {networkName}:\n                ipv4_address: {ip}\n".format(networkName=networks[index][0], ip=controller[index])
+output += """        depends_on:
+            - tcpdump
+    """
+
+output += """
+    tcpdump:
         image: kaazing/tcpdump
         network_mode: "host"
         volumes:
