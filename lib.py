@@ -24,6 +24,21 @@ def bytes_to_ip_address(bytes):
     return ip[:-1]
 
 
+# check_if_in_same_network checks if two ip addresses share the same first <numFields> fields. 
+# Eg: if ip1 = 192.9.9.0, ip2 = 192.9.8.0, numFields = 2, will return true, but with numFields = 3 returns false.
+# numFields should be 2 or 3
+def check_if_in_same_network(ip1: str, ip2: str, numFields: int) -> bool:
+    if numFields <= 1 or numFields >= 4:
+        return False
+    ip1Split = ip1.split(".")
+    ip2Split = ip2.split(".")
+    for i in range(0,numFields):
+        if ip1Split[i] != ip2Split[i]:
+            return False
+    
+    return True
+
+
 bufferSize = 1024
 forwardingPort = 54321
 

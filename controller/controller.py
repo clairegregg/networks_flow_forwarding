@@ -7,7 +7,7 @@ import math
 #for claire in the morning, all you need to store is edges!!!!!!!!!!!!!! once you can loop through vertices and edges you're g
 
 # This follows the Floyd-Warshall algorithm
-def calculate_routes(vertices: list, edges: list, graphVariablesLock: multiprocessing.Lock, sharedDistArray: list, sharedNextArray: list, shortestPathVariablesLock: multiprocessing.Lock):
+def calculate_routes(vertices: list, edges: list, graphVariablesLock: multiprocessing.Lock, sharedDistArray: list, sharedNextArray: list, shortestPathVariablesLock: multiprocessing.Lock, shortestPathCalculated: list):
     shortestPathCalculated[1].acquire()
     shortestPathCalculated[0] = False
             
@@ -131,6 +131,51 @@ def addId(ipDictionary: dict, graphVariablesLock: multiprocessing.Lock, message:
     graphVariablesLock.release()
     print("{} now also maps to {}".format(newId, index))
 
+def update_node_message(node_index: int, ipDictionary: dict, graphVariablesLock: multiprocessing.Lock, nextArray: list, shortestPathVariablesLock: multiprocessing.Lock) -> bytes:
+    shortestPathVariablesLock.acquire()
+    graphVariablesLock.acquire()
+
+    localIpDict = dict(ipDictionary)
+    nextToDest = []
+    for key in localIpDict:
+        # If it is an endpoint ID
+        if isinstance(key, bytes):
+            endpointNode = localIpDict[key]
+            # If the endpoint ID routes to the node requesting information, skip it
+            if endpointNode == node_index:
+                continue
+
+            # This is the next node in the direction of the endpoint node
+            nextNode = nextArray[node_index][endpointNode]
+
+            nodeIpAddresses = {ip for ip in localIpDict if localIpDict[ip]==node_index}
+            nextNodeIpAddresses = {ip for ip in localIpDict if localIpDict[ip]==nextNode}
+
+            # Loops through possible IP addresses for the next node
+            for nextNodeIp in nextNodeIpAddresses:
+                # Loops through possible IP addresses for current node
+                for nodeIp in nodeIpAddresses:
+                    # If the two IP addresses are in the same network, add the nextIp and the destination ID to the list and break
+                    if lib.check_if_in_same_network(nextNodeIp, nodeIp, 2):
+                        nextToDest.append((key, nextNodeIp))
+                        break
+                # If you get through all of the possible current IP addresses without a match, loop through the next possible next node ip address
+                else:
+                    continue
+                break
+    
+    message = b''
+    for newMapping in nextToDest:
+        #          endpoint id + ip address in bytes
+        message += newMapping[0] + lib.ip_address_to_bytes(newMapping[1])
+
+    shortestPathVariablesLock.release()
+    graphVariablesLock.release()
+
+    return message
+
+
+
 def wait_for_request(sock: socket.socket, ipDictionary: dict, vertices: list, edges: list, graphVariablesLock: multiprocessing.Lock, distArray: list, nextArray: list, shortestPathVariablesLock: multiprocessing.Lock, shortestPathCalculated: multiprocessing.Value):
     while True:
         bytesAddressPair = sock.recvfrom(lib.bufferSize)
@@ -149,6 +194,15 @@ def wait_for_request(sock: socket.socket, ipDictionary: dict, vertices: list, ed
             addId( ipDictionary, graphVariablesLock, message)
 
         # Request for information
+        elif message[lib.controlByteIndex] & lib.reqUpdateMask == lib.reqUpdateMask:
+            if not shortestPathCalculated[0]:
+                calculate_routes(vertices, edges, graphVariablesLock, distArray, nextArray, shortestPathVariablesLock, shortestPathCalculated)
+            node_index = ipDictionary[address[0]]
+            updatedRoutes = update_node_message(node_index, ipDictionary, graphVariablesLock, nextArray, shortestPathVariablesLock)
+            print("Sending the updated routes to endpoints to forwarder at address {}:\n{}".format(address, updatedRoutes))
+            sock.sendto(updatedRoutes, address)
+            
+            
 
 
 
