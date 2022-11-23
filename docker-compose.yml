@@ -16,6 +16,7 @@ services:
         depends_on:
             - controller
             - gateway
+            - gateway2
             - cloud_provider
 
     cloud_provider:
@@ -23,13 +24,14 @@ services:
             dockerfile:
                 server/Dockerfile
         # Appends the application id and gateway
-        command: ["FFEEDDCCBBAA", "172.30.2.5"]
+        command: ["FFEEDDCCBBAA", "10.30.5.8"]
         networks:
             cloud:
-                ipv4_address: 172.30.16.8
+                ipv4_address: 10.30.4.244
         depends_on:
             - controller
             - gateway
+            - gateway2
 
     gateway:
         build:
@@ -40,8 +42,24 @@ services:
         networks:
             home:
                 ipv4_address: 192.168.17.254
+            ISP:
+                ipv4_address: 172.30.8.45
+        depends_on:
+            - tcpdump
+            - controller
+    
+
+    gateway2:
+        build:
+            dockerfile:
+                forwarders/Dockerfile
+        # Appends any IP addresses this element can access
+        command: ["172.30.2.5","10.30.4.244"]
+        networks:
+            ISP:
+                ipv4_address: 172.30.8.255
             cloud:
-                ipv4_address: 172.30.2.5
+                ipv4_address: 10.30.5.8
         depends_on:
             - tcpdump
             - controller
@@ -50,12 +68,14 @@ services:
         build:
             dockerfile:
                 controller/Dockerfile
-        command: ["192.168.17.2","172.30.1.2"]
+        command: ["192.168.17.2","172.30.0.2","10.30.0.2"]
         networks:
             home:
                 ipv4_address: 192.168.17.2
+            ISP:
+                ipv4_address: 172.30.0.2
             cloud:
-                ipv4_address: 172.30.1.2
+                ipv4_address: 10.30.0.2
         depends_on:
             - tcpdump
     
@@ -73,9 +93,15 @@ networks:
             driver: default
             config:
                 - subnet: 192.168.17.0/24
-    cloud:
+    ISP:
         driver: bridge
         ipam:
             driver: default
             config:
                 - subnet: 172.30.0.0/16
+    cloud:
+        driver: bridge
+        ipam:
+            driver: default
+            config:
+                - subnet: 10.30.0.0/16

@@ -52,8 +52,10 @@ lengthOfIpAddressInBytes = 4
 addressIndicesBegin = 1 + (2 * lengthOfIpAddressInBytes) # Each forwarder has 2 ip addresses (its own) before it shares what it can access
 
 gateways = {
-    "192.168.17.254" : "172.30.2.5",
-    "172.30.2.5" : "192.168.17.254"
+    "192.168.17.254" : "172.30.8.45",
+    "172.30.8.45" : "192.168.17.254",
+    "172.30.8.255" : "10.30.5.8",
+    "10.30.5.8" : "172.30.8.255" 
 }
 
-controller_ip_addresses = ["192.168.17.2", "172.30.1.2"]
+controller_ip_addresses = ["192.168.17.2", "172.30.0.2", "10.30.0.2"]

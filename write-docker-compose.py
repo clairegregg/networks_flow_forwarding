@@ -7,21 +7,23 @@ employees = [
 
 servers = [
     # (name, id, gateway, network, ip address)
-    ("cloud_provider", "FFEEDDCCBBAA", "172.30.2.5", "cloud", "172.30.16.8")
+    ("cloud_provider", "FFEEDDCCBBAA", "10.30.5.8", "cloud", "10.30.4.244")
 ]
 
 gateways = [
-    # (name, ip address in each network, ip addresses it has access to)
-    ("gateway", "192.168.17.254", "172.30.2.5", "192.168.17.17", "172.30.16.8")
+    # (name, (network name, ip address in each network), ip addresses it has access to)
+    ("gateway", ("home", "192.168.17.254"), ("ISP","172.30.8.45"), "192.168.17.17", "172.30.16.8"),
+    ("gateway2", ("ISP","172.30.8.255"), ("cloud","10.30.5.8"), "172.30.2.5", "10.30.4.244")
 ]
 
-             # ip address in each network in order
+ # ip address in each network in order
 controller = lib.controller_ip_addresses
 
 networks = [
     # (name, subnet)
     ("home", "192.168.17.0/24"),
-    ("cloud", "172.30.0.0/16")
+    ("ISP", "172.30.0.0/16"),
+    ("cloud", "10.30.0.0/16")
 ]
 
 output = """
@@ -93,10 +95,12 @@ for gateway in gateways:
     
     output = output[:-1]+"]\n        networks:"
 
-    for index in range(len(networks)):
-        output += """
+    output += """
             {name}:
-                ipv4_address: {ip}""".format(name=networks[index][0], ip=gateway[1+index])
+                ipv4_address: {ip}""".format(name=gateway[1][0], ip=gateway[1][1])
+    output += """
+            {name}:
+                ipv4_address: {ip}""".format(name=gateway[2][0], ip=gateway[2][1])
 
     output += """
         depends_on:
