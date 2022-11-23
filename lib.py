@@ -30,6 +30,8 @@ forwardingPort = 54321
 # Variables for control messages
 controlByteIndex = 0
 declarationMask = 0b1
+newIdMask = 0b10
+reqUpdateMask = 0b100
 
 lengthOfIpAddressInBytes = 4
 addressIndicesBegin = 1 + (2 * lengthOfIpAddressInBytes) # Each forwarder has 2 ip addresses (its own) before it shares what it can access

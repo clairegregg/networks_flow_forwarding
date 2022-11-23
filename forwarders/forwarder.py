@@ -5,12 +5,19 @@ import sys
 import lib
 import multiprocessing
 
-def deal_with_declaration(routingTable, routingTableLock, message, address):
+def deal_with_declaration(sock, routingTable, routingTableLock, message, address, controllerIp, ip):
+    newId = message[1:7]
+    # Update local routing table
     routingTableLock.acquire()
     localRoutingTable = routingTable
-    localRoutingTable[message[1:7]] = address[0]
+    localRoutingTable[newId] = address[0]
     routingTable = localRoutingTable
     routingTableLock.release()
+    
+    # Share new ID with controller
+    newMsg = lib.newIdMask.to_bytes() + lib.ip_address_to_bytes(ip) + newId
+    print("Sending {}".format(newMsg))
+    sock.sendto(newMsg, (controllerIp, lib.forwardingPort))
 
 def find_controller(ip):
     ipSplit = ip.split(".")
@@ -46,9 +53,9 @@ def declare_node(sock, routingTable, sockIp, ip2):
     
     print("Sending declaration to {}".format(controllerIp))
     sock.sendto(message, (controllerIp, lib.forwardingPort))
+    return controllerIp
 
-
-def forward(sock, routingTable, routingTableLock):
+def forward(sock, routingTable, routingTableLock, controllerIp, ip):
     while True:
         bytesAddressPair = sock.recvfrom(lib.bufferSize)
         message = bytesAddressPair[0]
@@ -60,7 +67,7 @@ def forward(sock, routingTable, routingTableLock):
         IP = "Client address: {}".format(address)
 
         if message[0] == 1:
-            deal_with_declaration(routingTable, routingTableLock, message, address)
+            deal_with_declaration(sock, routingTable, routingTableLock, message, address, controllerIp, ip)
             print("Dealing with declaration from {}".format(address))
             continue
 
@@ -83,8 +90,8 @@ def add_port_and_forward(givenIp, routingTable, routingTableLock):
     print("Other IP is {}".format(otherIP))
     sock.bind((otherIP, 54321))
 
-    declare_node(sock, routingTable, otherIP, givenIp)
-    forward(sock, routingTable, routingTableLock)
+    controllerIp = declare_node(sock, routingTable, otherIP, givenIp)
+    forward(sock, routingTable, routingTableLock, controllerIp, otherIP)
 
 manager = multiprocessing.Manager()
 
@@ -110,4 +117,4 @@ process.start()
 
 print("UDP forwarder up and listening")
 
-forward(UDPForwarderSocket, routingTable, routingTableLock)
+forward(UDPForwarderSocket, routingTable, routingTableLock, find_controller(givenIp), givenIp)

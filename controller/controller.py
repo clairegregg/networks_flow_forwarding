@@ -122,6 +122,14 @@ def deal_with_declaration(ipDictionary: dict, vertices: list, edges: list, graph
     print("New forwarder at {} can access {}".format(address, canAccess))
     print("Vertices = {}, Edges = {}".format(vertices, edges))
 
+def addId(ipDictionary: dict, graphVariablesLock: multiprocessing.Lock, message: str):
+    ipAddr = lib.bytes_to_ip_address(message[1:1+lib.lengthOfIpAddressInBytes])
+    newId = message[1+lib.lengthOfIpAddressInBytes:len(message)]
+    graphVariablesLock.acquire()
+    index = ipDictionary[ipAddr]
+    ipDictionary[newId] = index
+    graphVariablesLock.release()
+    print("{} now also maps to {}".format(newId, index))
 
 def wait_for_request(sock: socket.socket, ipDictionary: dict, vertices: list, edges: list, graphVariablesLock: multiprocessing.Lock, distArray: list, nextArray: list, shortestPathVariablesLock: multiprocessing.Lock, shortestPathCalculated: multiprocessing.Value):
     while True:
@@ -137,6 +145,8 @@ def wait_for_request(sock: socket.socket, ipDictionary: dict, vertices: list, ed
             deal_with_declaration(ipDictionary, vertices, edges, graphVariablesLock, message, address)
 
         # New information
+        elif message[lib.controlByteIndex] & lib.newIdMask == lib.newIdMask:
+            addId( ipDictionary, graphVariablesLock, message)
 
         # Request for information
 
