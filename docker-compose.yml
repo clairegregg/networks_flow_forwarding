@@ -38,7 +38,7 @@ services:
             dockerfile:
                 forwarders/Dockerfile
         # Appends any IP addresses this element can access
-        command: ["192.168.17.17","172.30.16.8"]
+        command: ["192.168.17.17","172.30.8.255"]
         networks:
             home:
                 ipv4_address: 192.168.17.254
@@ -54,7 +54,7 @@ services:
             dockerfile:
                 forwarders/Dockerfile
         # Appends any IP addresses this element can access
-        command: ["172.30.2.5","10.30.4.244"]
+        command: ["172.30.8.45","10.30.4.244"]
         networks:
             ISP:
                 ipv4_address: 172.30.8.255

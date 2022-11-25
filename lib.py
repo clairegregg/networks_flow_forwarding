@@ -30,6 +30,7 @@ def bytes_to_ip_address(bytes):
 def check_if_in_same_network(ip1: str, ip2: str, numFields: int) -> bool:
     if numFields <= 1 or numFields >= 4:
         return False
+    print("Ip1 = {}".format(ip1))
     ip1Split = ip1.split(".")
     ip2Split = ip2.split(".")
     for i in range(0,numFields):
@@ -48,6 +49,7 @@ declarationMask = 0b1
 newIdMask = 0b10
 reqUpdateMask = 0b100
 
+lengthOfEndpointIdInBytes = 6
 lengthOfIpAddressInBytes = 4
 addressIndicesBegin = 1 + (2 * lengthOfIpAddressInBytes) # Each forwarder has 2 ip addresses (its own) before it shares what it can access
 

@@ -55,34 +55,72 @@ def declare_node(sock, routingTable, sockIp, ip2):
     sock.sendto(message, (controllerIp, lib.forwardingPort))
     return controllerIp
 
+def add_endpoint_mappings(routingTable: dict, routingTableLock: multiprocessing.Lock, newMappings: tuple):
+    routingTableLock.acquire()
+    for mapping in newMappings:
+        routingTable[mapping[0]] = mapping[1]
+
+    routingTableLock.release()
+
+def request_more_info(sock, routingTable, routingTableLock, controllerIp, ip):
+    message = lib.reqUpdateMask.to_bytes(1)
+    sock.sendto(message, (controllerIp, lib.forwardingPort))
+    while True:
+        bytesAddressPair = sock.recvfrom(lib.bufferSize)
+        if bytesAddressPair[0][lib.controlByteIndex] & lib.reqUpdateMask != lib.reqUpdateMask:
+            deal_with_recv(sock, routingTable, routingTableLock, controllerIp, ip, bytesAddressPair)
+            continue
+        else:
+            message = bytesAddressPair[0]
+            i = 1
+            newMappings = []
+            while i < len(message):
+                newEndpoint = message[i:i+lib.lengthOfEndpointIdInBytes]
+                i += lib.lengthOfEndpointIdInBytes
+                newIp = lib.bytes_to_ip_address(message[i:i+lib.lengthOfIpAddressInBytes])
+                newMappings.append((newEndpoint, newIp))
+                i += lib.lengthOfIpAddressInBytes
+            print("Message is {}, adding new mappings {}".format(message, newMappings))
+            add_endpoint_mappings(routingTable, routingTableLock, newMappings)
+            break
+    
+def deal_with_recv(sock, routingTable, routingTableLock, controllerIp, ip, bytesAddressPair):
+    message = bytesAddressPair[0]
+    address = bytesAddressPair[1]
+    givenIp = socket.gethostbyname(socket.gethostname())
+    print("Forwarder socket bound to {}".format(givenIp))
+
+    msg = "Message from client: {}".format(message)
+    IP = "Client address: {}".format(address)
+
+    if message[lib.controlByteIndex] & lib.declarationMask == lib.declarationMask:
+        deal_with_declaration(sock, routingTable, routingTableLock, message, address, controllerIp, ip)
+        print("Dealing with declaration from {}".format(address))
+        return
+
+    print(msg)
+    print(IP)
+    destination = message[1:7]
+    print("Destination is {}".format(destination))
+    if destination not in routingTable:
+        request_more_info(sock, routingTable, routingTableLock, controllerIp, ip)
+        # After this is completed, the user should know where to send the item to
+        if destination not in routingTable:
+            print("Dropping packet to destination {} as that destination is not registered".format(destination))
+            return
+
+    destinationAddress = (routingTable[destination], lib.forwardingPort)
+    print("Destination address is {}".format(destinationAddress) )
+    # Sending a reply to the client
+    sock.sendto(message, destinationAddress)
+    print("Sent message onto {}".format(destinationAddress))
+
+
 def forward(sock, routingTable, routingTableLock, controllerIp, ip):
     while True:
         bytesAddressPair = sock.recvfrom(lib.bufferSize)
-        message = bytesAddressPair[0]
-        address = bytesAddressPair[1]
-        givenIp = socket.gethostbyname(socket.gethostname())
-        print("Forwarder socket bound to {}".format(givenIp))
-
-        msg = "Message from client: {}".format(message)
-        IP = "Client address: {}".format(address)
-
-        if message[0] == 1:
-            deal_with_declaration(sock, routingTable, routingTableLock, message, address, controllerIp, ip)
-            print("Dealing with declaration from {}".format(address))
-            continue
-
-        print(msg)
-        print(IP)
-        destination = message[1:7]
-        print("Destination is {}".format(destination))
-        if destination not in routingTable:
-            print("Dropping packet to destination {} as that destination is not registered".format(destination))
-            continue
-
-        destinationAddress = (routingTable[destination], 54321)
-        # Sending a reply to the client
-        sock.sendto(message, destinationAddress)
-        print("Sent message onto {}".format(destinationAddress))
+        deal_with_recv(sock, routingTable, routingTableLock, controllerIp, ip, bytesAddressPair)
+        
 
 def add_port_and_forward(givenIp, routingTable, routingTableLock):
     sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)

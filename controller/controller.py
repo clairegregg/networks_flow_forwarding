@@ -4,59 +4,73 @@ import socket
 import lib
 import math
 
-#for claire in the morning, all you need to store is edges!!!!!!!!!!!!!! once you can loop through vertices and edges you're g
-
 # This follows the Floyd-Warshall algorithm
-def calculate_routes(vertices: list, edges: list, graphVariablesLock: multiprocessing.Lock, sharedDistArray: list, sharedNextArray: list, shortestPathVariablesLock: multiprocessing.Lock, shortestPathCalculated: list):
-    shortestPathCalculated[1].acquire()
-    shortestPathCalculated[0] = False
-            
+def calculate_routes(vertices: list, edges: list, graphVariablesLock: multiprocessing.Lock, distArray: list, nextArray: list, shortestPathVariablesLock: multiprocessing.Lock, shortestPathCalculated: list):
+    shortestPathCalculated[0].value = True
+    print("Edges: {}".format(edges))
+    
     matrixDimen = len(vertices)
-    distArray = [[math.inf for  _ in range(0, matrixDimen)] for _ in range(0, matrixDimen)]
-    nextArray = [[None for _ in range(0, matrixDimen)] for _ in range(0, matrixDimen)]
+    localdistArray = [[math.inf for  _ in range(0, matrixDimen)] for _ in range(0, matrixDimen)]
+    localnextArray = [[None for _ in range(0, matrixDimen)] for _ in range(0, matrixDimen)]
     graphVariablesLock.acquire()
     shortestPathVariablesLock.acquire()
     
     # Loop through edges
     for edge in edges:
-        distArray[edge[0]][edge[1]] = 1 # Everything has a weight of 1 in this network
-        nextArray[edge[0]][edge[1]] = j
+        localdistArray[edge[0]][edge[1]] = 1 # Everything has a weight of 1 in this network
+        localnextArray[edge[0]][edge[1]] = edge[1]
 
+        print("Because of edge {}, distArray[{}][{}] is equal to {} and nextArray[{}][{}] is equal to {}".format(edge, edge[0], edge[1], localdistArray[edge[0]][edge[1]], edge[0], edge[1], localnextArray[edge[0]][edge[1]]))
+
+    print("Type of edges after loop {}".format(type(edges)))
     # Loop through vertices
     for i in range(0, matrixDimen):
-        distArray[i][i] = 0
-        nextArray[i][i] = i
+        localdistArray[i][i] = 0
+        localnextArray[i][i] = i
 
     # Floyd-Warshall
     for k in range(0, matrixDimen):
         for i in range(0, matrixDimen): 
             for j in range(0, matrixDimen):  
-                if distArray[i][j] > distArray[i][k] + distArray[k][j]:
-                    distArray[i][j] = distArray[i][k] + distArray[k][j]
-                    nextArray[i][j] = nextArray[i][k]
+                if localdistArray[i][j] > localdistArray[i][k] + localdistArray[k][j]:
+                    localdistArray[i][j] = localdistArray[i][k] + localdistArray[k][j]
+                    localnextArray[i][j] = localnextArray[i][k]
 
-    sharedDistArray = distArray
-    sharedNextArray = nextArray
+    #print("Local next array: {}".format(localNextArray))
+
+    print("Type of nextArray {}".format(type(nextArray)))
+    distArray[:] = localdistArray
+    nextArray[:] = localnextArray
+    print("Type of nextArray {}".format(type(nextArray)))
+
+    print("Public next array: {}".format(nextArray))
 
     graphVariablesLock.release()
     shortestPathVariablesLock.release()
-    shortestPathCalculated[1].release()
 
 # Reorders ipDictionary, vertices list and edges list if 2 previously defined nodes have the same address
 def node_has_2_indices(ip1: str, ip2: str, ipDictionary: dict, vertices: list, edges: list):
+    print("Type of edges {}".format(type(edges)))
     ip1Index = ipDictionary[ip1]
     ip2Index = ipDictionary[ip2]
 
-    localIpDictionary = ipDictionary
     if ip1Index < ip2Index:
-        localIpDictionary[ip2] = ip1Index
-    else:
-        localIpDictionary[ip1] = ip2Index
+        ipDictionary[ip2] = ip1Index
+        vertices.remove(ip2Index)
+        for index in range(0,len(edges)):
+            if edges[index][0] == ip2Index:
+                edges[index] = (ip1Index, edges[index][1])
+            elif edges[index][1] == ip2Index:
+                edges[index] = (edges[index][0], ip1Index)
 
-    # COME BACK HERE AND MAKE IT WORK
-    # What should happen: all other things in distArray and nextArray referring to the larger index should be changed to refer to the smaller index.
-    # THEN all of the indices larger than the larger index should be moved back 1!
-    ipDictionary = localIpDictionary
+    else:
+        ipDictionary[ip1] = ip2Index
+        vertices.remove(ip1Index)
+        for index in range(0,len(edges)):
+            if edges[index][0] == ip1Index:
+                edges[index] = (ip2Index, edges[index][1])
+            elif edges[index][1] == ip1Index:
+                edges[index] = (edges[index][0], ip2Index)
     
 
 def new_node(ip1: str, ip2: str, ipDictionary: dict, vertices: list, edges: list, graphVariablesLock: multiprocessing.Lock):
@@ -65,6 +79,7 @@ def new_node(ip1: str, ip2: str, ipDictionary: dict, vertices: list, edges: list
 
     # Neither in the dictionary, just add both leading to a new node!
     if ip1 not in ipDictionary and ip2 not in ipDictionary:
+        print("neither in dictionary")
         nodeIndex = len(vertices)
         ipDictionary[ip1] = nodeIndex
         ipDictionary[ip2] = nodeIndex
@@ -72,14 +87,17 @@ def new_node(ip1: str, ip2: str, ipDictionary: dict, vertices: list, edges: list
     
     # Only one of them is in the dictionary, just add the other leading to the same node
     elif ip1 not in ipDictionary:
+        print("1 in dictionary")
         nodeIndex = ipDictionary[ip2]
         ipDictionary[ip1] = nodeIndex
     elif ip2 not in ipDictionary:
+        print("2 in dictionary")
         nodeIndex = ipDictionary[ip1]
         ipDictionary[ip2] = nodeIndex
 
     # Both are already in the dictionary, pointing to different nodes. In this case, they must be combined. 
     else:
+        print("oh no")
         node_has_2_indices(ip1, ip2, ipDictionary, vertices, edges)
 
     graphVariablesLock.release()
@@ -94,31 +112,31 @@ def new_temp_node(ip, ipDictionary, vertices):
 def deal_with_declaration(ipDictionary: dict, vertices: list, edges: list, graphVariablesLock: multiprocessing.Lock, message: str, address: tuple):
     # A node is a forwarder which consists of 2 ports in 2 networks. These can be stored as just their ip addresses as ports will always be 54321
     ip1 = lib.bytes_to_ip_address(message[1:5])
+    print("IP1 is {}".format(ip1))
     ip2 = lib.bytes_to_ip_address(message[5:9])
+    print("IP2 is {}".format(ip2))
     node = new_node(ip1, ip2, ipDictionary, vertices, edges, graphVariablesLock)
 
     canAccess = []
     i = lib.addressIndicesBegin
+    graphVariablesLock.acquire()
     while i < len(message):
-        accessibleIpAddressBytes = message[i:i+lib.lengthOfIpAddressInBytes+1] # Adding extra 1 as end index is exclusive
+        accessibleIpAddressBytes = message[i:i+lib.lengthOfIpAddressInBytes] 
         accessibleIpAddress = lib.bytes_to_ip_address(accessibleIpAddressBytes)
         canAccess.append(accessibleIpAddress)
-
-        graphVariablesLock.acquire()
+        
         ipIndex = -1
         if accessibleIpAddress not in ipDictionary:
+            print("having to add new new at {}".format(accessibleIpAddress))
             ipIndex = new_temp_node(accessibleIpAddress, ipDictionary, vertices)
             ipDictionary[accessibleIpAddress] = ipIndex
         else:
             ipIndex = ipDictionary[accessibleIpAddress]
 
-        localEdges = list(edges)
-        localEdges.append((node, ipIndex))
-        edges = localEdges
-
-        graphVariablesLock.release()
+        edges.append((node, ipIndex))
         i += 4
 
+    graphVariablesLock.release()
     print("New forwarder at {} can access {}".format(address, canAccess))
     print("Vertices = {}, Edges = {}".format(vertices, edges))
 
@@ -139,10 +157,13 @@ def update_node_message(node_index: int, ipDictionary: dict, graphVariablesLock:
     nextToDest = []
     for key in localIpDict:
         # If it is an endpoint ID
+        print("Key is {}".format(key))
         if isinstance(key, bytes):
+            print("it is bytes")
             endpointNode = localIpDict[key]
             # If the endpoint ID routes to the node requesting information, skip it
             if endpointNode == node_index:
+                print("it is in the same node")
                 continue
 
             # This is the next node in the direction of the endpoint node
@@ -153,10 +174,15 @@ def update_node_message(node_index: int, ipDictionary: dict, graphVariablesLock:
 
             # Loops through possible IP addresses for the next node
             for nextNodeIp in nextNodeIpAddresses:
+                if isinstance(nextNodeIp, bytes):
+                    continue
                 # Loops through possible IP addresses for current node
                 for nodeIp in nodeIpAddresses:
+                    print("Checking this ({}) node ip against ({})".format(nextNodeIp, nodeIp))
                     # If the two IP addresses are in the same network, add the nextIp and the destination ID to the list and break
-                    if lib.check_if_in_same_network(nextNodeIp, nodeIp, 2):
+                    if isinstance(nodeIp, str) and lib.check_if_in_same_network(nextNodeIp, nodeIp, 2):
+                        print("it is a string and in same network woooooooo")
+                        print("Next node ip: {}".format(nextNodeIp))
                         nextToDest.append((key, nextNodeIp))
                         break
                 # If you get through all of the possible current IP addresses without a match, loop through the next possible next node ip address
@@ -164,7 +190,7 @@ def update_node_message(node_index: int, ipDictionary: dict, graphVariablesLock:
                     continue
                 break
     
-    message = b''
+    message = lib.reqUpdateMask.to_bytes()
     for newMapping in nextToDest:
         #          endpoint id + ip address in bytes
         message += newMapping[0] + lib.ip_address_to_bytes(newMapping[1])
@@ -185,9 +211,10 @@ def wait_for_request(sock: socket.socket, ipDictionary: dict, vertices: list, ed
         # Declaration
         if message[lib.controlByteIndex] & lib.declarationMask == lib.declarationMask:
             shortestPathCalculated[1].acquire()
-            shortestPathCalculated[0] = False
+            shortestPathCalculated[0].value = False
             shortestPathCalculated[1].release()
             deal_with_declaration(ipDictionary, vertices, edges, graphVariablesLock, message, address)
+            print("Edges after declaration = {}".format(edges))
 
         # New information
         elif message[lib.controlByteIndex] & lib.newIdMask == lib.newIdMask:
@@ -195,8 +222,15 @@ def wait_for_request(sock: socket.socket, ipDictionary: dict, vertices: list, ed
 
         # Request for information
         elif message[lib.controlByteIndex] & lib.reqUpdateMask == lib.reqUpdateMask:
-            if not shortestPathCalculated[0]:
+            shortestPathCalculated[1].acquire()
+            if not shortestPathCalculated[0].value:
+                localIp = dict(ipDictionary)
+                for key in localIp:
+                    print("{}:{}\n".format(key, localIp[key]))
                 calculate_routes(vertices, edges, graphVariablesLock, distArray, nextArray, shortestPathVariablesLock, shortestPathCalculated)
+            else:
+                print("Path has already been calculated")
+            shortestPathCalculated[1].release()
             node_index = ipDictionary[address[0]]
             updatedRoutes = update_node_message(node_index, ipDictionary, graphVariablesLock, nextArray, shortestPathVariablesLock)
             print("Sending the updated routes to endpoints to forwarder at address {}:\n{}".format(address, updatedRoutes))
@@ -207,6 +241,7 @@ def wait_for_request(sock: socket.socket, ipDictionary: dict, vertices: list, ed
 
 
 def add_port(ipAddress: str, ipDictionary: dict, vertices: list, edges: list, graphVariablesLock: multiprocessing.Lock, distArray: list, nextArray: list, shortestPathVariablesLock: multiprocessing.Lock, shortestPathCalculated: multiprocessing.Value):
+    print("Adding ip address {}".format(ipAddress))
     address = (ipAddress, lib.forwardingPort)
     sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
     sock.bind(address)
@@ -222,6 +257,7 @@ distArray = manager.list()
 nextArray = manager.list()
 shortestPathVariablesLock = manager.Lock()
 shortestPathCalculated = [manager.Value(bool, False), manager.Lock()]
+#print("Initialised shortestPAthCalculated to {}".format())
 
 for i in range(1,len(sys.argv)-1):
     process = multiprocessing.Process(target=add_port,args=(sys.argv[i], ipDictionary, vertices, edges, graphVariablesLock, distArray, nextArray, shortestPathVariablesLock, shortestPathCalculated))
