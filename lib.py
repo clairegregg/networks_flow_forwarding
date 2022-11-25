@@ -30,7 +30,6 @@ def bytes_to_ip_address(bytes):
 def check_if_in_same_network(ip1: str, ip2: str, numFields: int) -> bool:
     if numFields <= 1 or numFields >= 4:
         return False
-    print("Ip1 = {}".format(ip1))
     ip1Split = ip1.split(".")
     ip2Split = ip2.split(".")
     for i in range(0,numFields):
