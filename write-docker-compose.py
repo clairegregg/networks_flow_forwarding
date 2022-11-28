@@ -14,6 +14,7 @@ gateways = [
     # (name, (network name, ip address in each network), ip addresses it has access to)
     ("gateway", ("home", "192.168.17.254"), ("ISP","172.30.8.45"), "192.168.17.17", "172.30.8.255"),
     ("gateway2", ("ISP","172.30.8.255"), ("cloud","10.30.5.8"), "172.30.8.45", "10.30.4.244")
+    ("g")
 ]
 
  # ip address in each network in order

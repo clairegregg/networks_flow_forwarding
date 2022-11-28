@@ -1,12 +1,19 @@
-# Passes along message with endpoint IDing where it's going 
- 
 import socket
 import sys
 import lib
 import multiprocessing
 
-def deal_with_declaration(sock, routingTable, routingTableLock, message, address, controllerIp, ip):
-    newId = message[1:7]
+# This deals with when an endpoint declares itself to the forwarder
+# Parameters:
+#   routingTable:       Dictionary of where to send a message to in order to get to certain places.
+#   routingTableLock:   Mutex lock for routingTable.
+#   message:            Message from endpoint containing endpoint ID.
+#   address:            Address of endpoint which sent declaration.
+#   ip:                 Address of forwarder socket.
+# Returns:
+#   bytes to send to controller to declare new endpoint ID.
+def deal_with_declaration(routingTable: dict, routingTableLock: multiprocessing.Lock, message: str, address: tuple, ip: str) -> bytes:
+    newId = message[1:1+lib.lengthOfEndpointIdInBytes]
     # Update local routing table
     routingTableLock.acquire()
     localRoutingTable = routingTable
@@ -14,31 +21,27 @@ def deal_with_declaration(sock, routingTable, routingTableLock, message, address
     routingTable = localRoutingTable
     routingTableLock.release()
     
-    # Share new ID with controller
-    newMsg = lib.newIdMask.to_bytes() + lib.ip_address_to_bytes(ip) + newId
-    sock.sendto(newMsg, (controllerIp, lib.forwardingPort))
+    # Create message to share new ID with controller
+    return lib.newIdMask.to_bytes() + lib.ip_address_to_bytes(ip) + newId
 
-def find_controller(ip):
-    ipSplit = ip.split(".")
-    ipPrefix = ipSplit[0] + "." + ipSplit[1] + "." + ipSplit[2]
-
-    ipAddress = ""
+# This finds the controller which is associated with a specific IP address.
+# It takes in the given IP address and returns the corresponding controller IP address.
+def find_controller(ip: str) -> str:
     for ipC in lib.controller_ip_addresses:
-        if ipC.startswith(ipPrefix):
-            ipAddress = ipC
-            break
-    
-    if ipAddress == "":
-        ipPrefix = ipSplit[0] + "." + ipSplit[1]
-        for ipC in lib.controller_ip_addresses:
-            if ipC.startswith(ipPrefix):
-                ipAddress = ipC
-                break
+        if lib.check_if_in_same_network(ip, ipC, 3):
+            return ipC
 
-    return ipAddress
+    for ipC in lib.controller_ip_addresses:
+        if lib.check_if_in_same_network(ip, ipC, 2):
+            return ipC
         
-
-def declare_node(sock, routingTable, sockIp, ip2):
+# This declares a forwarder to the controller.
+# Arguments:
+#   sock: Socket for UDP communication.
+#   routingTable: Dictionary of where to send a message to in order to get to certain places.
+#   sockIp: IP address of socket.
+#   ip2: IP address of forwarder's other socket.
+def declare_node(sock: socket.socket, routingTable: dict, sockIp: str, ip2: str):
     controllerIp = find_controller(sockIp)
     if controllerIp == "":
         # Should not get here
@@ -53,21 +56,37 @@ def declare_node(sock, routingTable, sockIp, ip2):
     sock.sendto(message, (controllerIp, lib.forwardingPort))
     return controllerIp
 
-def add_endpoint_mappings(routingTable: dict, routingTableLock: multiprocessing.Lock, newMappings: tuple):
+# This adds new endpoint mappings to routingTable after controller has sent them on.
+# Parameters:
+#   routingDict:        Dictionary of where to send a message to in order to get to certain places.
+#   routingTableLock:   Mutex lock for routingTable.
+#   newMappings:        List of tuples of new for the routing table.
+def add_endpoint_mappings(routingTable: dict, routingTableLock: multiprocessing.Lock, newMappings: list):
     routingTableLock.acquire()
     for mapping in newMappings:
         routingTable[mapping[0]] = mapping[1]
-
     routingTableLock.release()
 
+# This is called whenever the forwarder needs more information, and allows it to keep receiving messages as normal while it is waiting for new information.
+# Parameters:
+#   sock:               Socket for UDP communication.
+#   routingTable:       Dictionary of where to send a message to in order to get to certain places.
+#   routingTableLock:   Mutex lock for routingTable.
+#   controllerIp:       IP address of associated controller socket.
+#   ip:                 IP address of this forwarder's socket.
 def request_more_info(sock, routingTable, routingTableLock, controllerIp, ip):
+    # Send message to request new information
     message = lib.reqUpdateMask.to_bytes(1)
     sock.sendto(message, (controllerIp, lib.forwardingPort))
+
+    # Loop receiving messages
     while True:
         bytesAddressPair = sock.recvfrom(lib.bufferSize)
+        # If the message is not an update
         if bytesAddressPair[0][lib.controlByteIndex] & lib.reqUpdateMask != lib.reqUpdateMask:
             deal_with_recv(sock, routingTable, routingTableLock, controllerIp, ip, bytesAddressPair)
             continue
+        # If the message is an update
         else:
             message = bytesAddressPair[0]
             i = 1
@@ -87,7 +106,8 @@ def deal_with_recv(sock, routingTable, routingTableLock, controllerIp, ip, bytes
     givenIp = socket.gethostbyname(socket.gethostname())
 
     if message[lib.controlByteIndex] & lib.declarationMask == lib.declarationMask:
-        deal_with_declaration(sock, routingTable, routingTableLock, message, address, controllerIp, ip)
+        msg = deal_with_declaration(routingTable, routingTableLock, message, address, ip)
+        sock.sendto(msg, (controllerIp, lib.forwardingPort))
         return
 
     destination = message[1:7]
