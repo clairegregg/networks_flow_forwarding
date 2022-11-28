@@ -4,18 +4,36 @@
 version: '2'
 services:
 
-    employee:
+    employee1:
         build:
             dockerfile:
                 client/Dockerfile
         # Appends the application id and gateway
         command: ["AABBCCDDEEFF", "192.168.17.254"]
         networks:
-            home:
+            home1:
                 ipv4_address: 192.168.17.17
         depends_on:
             - controller
-            - gateway_e_to_isp
+            - gateway_e1_to_isp
+            - gateway_e2_to_isp
+            - gateway_isp_to_int
+            - gateway_int_to_cloud
+            - cloud_provider
+
+    employee2:
+        build:
+            dockerfile:
+                client/Dockerfile
+        # Appends the application id and gateway
+        command: ["AABBCCEEEEFF", "192.168.18.254"]
+        networks:
+            home2:
+                ipv4_address: 192.168.18.19
+        depends_on:
+            - controller
+            - gateway_e1_to_isp
+            - gateway_e2_to_isp
             - gateway_isp_to_int
             - gateway_int_to_cloud
             - cloud_provider
@@ -31,21 +49,38 @@ services:
                 ipv4_address: 172.20.16.8
         depends_on:
             - controller
-            - gateway_e_to_isp
+            - gateway_e1_to_isp
+            - gateway_e2_to_isp
             - gateway_isp_to_int
             - gateway_int_to_cloud
 
-    gateway_e_to_isp:
+    gateway_e1_to_isp:
         build:
             dockerfile:
                 forwarders/Dockerfile
         # Appends any IP addresses this element can access
-        command: ["192.168.17.17","172.30.6.255"]
+        command: ["192.168.17.17","172.30.6.255","172.30.2.6"]
         networks:
-            home:
+            home1:
                 ipv4_address: 192.168.17.254
             isp:
                 ipv4_address: 172.30.8.45
+        depends_on:
+            - tcpdump
+            - controller
+    
+
+    gateway_e2_to_isp:
+        build:
+            dockerfile:
+                forwarders/Dockerfile
+        # Appends any IP addresses this element can access
+        command: ["192.168.18.19","172.30.6.255","172.30.8.45"]
+        networks:
+            home2:
+                ipv4_address: 192.168.18.254
+            isp:
+                ipv4_address: 172.30.2.6
         depends_on:
             - tcpdump
             - controller
@@ -86,10 +121,12 @@ services:
         build:
             dockerfile:
                 controller/Dockerfile
-        command: ["192.168.17.2","172.30.0.2","10.30.0.2","172.20.0.2"]
+        command: ["192.168.17.2","192.168.18.2","172.30.0.2","10.30.0.2","172.20.0.2"]
         networks:
-            home:
+            home1:
                 ipv4_address: 192.168.17.2
+            home2:
+                ipv4_address: 192.168.18.2
             isp:
                 ipv4_address: 172.30.0.2
             internet:
@@ -107,12 +144,18 @@ services:
         command: ["-i", "any", "udp", "-w", "tcpdump/tcpdump.pcap"] 
 
 networks:
-    home:
+    home1:
         driver: bridge
         ipam:
             driver: default
             config:
                 - subnet: 192.168.17.0/24
+    home2:
+        driver: bridge
+        ipam:
+            driver: default
+            config:
+                - subnet: 192.168.18.0/24
     isp:
         driver: bridge
         ipam:

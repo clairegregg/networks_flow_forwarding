@@ -2,7 +2,8 @@ import lib
 
 employees = [
     # (name, id, gateway, network, ip address)
-    ("employee", "AABBCCDDEEFF", "192.168.17.254", "home", "192.168.17.17")
+    ("employee1", "AABBCCDDEEFF", "192.168.17.254", "home1", "192.168.17.17"),
+    ("employee2", "AABBCCEEEEFF", "192.168.18.254", "home2", "192.168.18.19")
 ]
 
 servers = [
@@ -12,7 +13,8 @@ servers = [
 
 gateways = [
     # (name, (network name, ip address in each network), ip addresses it has access to)
-    ("gateway_e_to_isp", ("home", "192.168.17.254"), ("isp","172.30.8.45"), "192.168.17.17", "172.30.6.255"),
+    ("gateway_e1_to_isp", ("home1", "192.168.17.254"), ("isp","172.30.8.45"), "192.168.17.17", "172.30.6.255", "172.30.2.6"),
+    ("gateway_e2_to_isp", ("home2", "192.168.18.254"), ("isp","172.30.2.6"), "192.168.18.19", "172.30.6.255", "172.30.8.45"),
     ("gateway_isp_to_int", ("isp","172.30.6.255"), ("internet","10.30.5.8"), "172.30.8.45", "10.30.4.244"),
     ("gateway_int_to_cloud", ("internet", "10.30.4.244"), ("cloud", "172.20.7.9"), "10.30.5.8", "172.20.16.8")
 ]
@@ -22,7 +24,8 @@ controller = lib.controller_ip_addresses
 
 networks = [
     # (name, subnet)
-    ("home", "192.168.17.0/24"),
+    ("home1", "192.168.17.0/24"),
+    ("home2", "192.168.18.0/24"),
     ("isp", "172.30.0.0/16"),
     ("internet", "10.30.0.0/16"),
     ("cloud", "172.20.0.0/16")
