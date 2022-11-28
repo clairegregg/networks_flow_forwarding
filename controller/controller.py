@@ -262,6 +262,10 @@ def wait_for_request(sock: socket.socket, ipDictionary: dict, numNodes: multipro
 
         # Message is a new endpoint ID being shared
         elif message[lib.controlByteIndex] & lib.newIdMask == lib.newIdMask:
+            # Change the shortestPathCalculated variable to reflect the graph has changed.
+            shortestPathCalculated[1].acquire()
+            shortestPathCalculated[0].value = False
+            shortestPathCalculated[1].release()
             addId( ipDictionary, graphVariablesLock, message)
 
         # Message is a request for information from a forwarder
