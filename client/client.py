@@ -12,7 +12,7 @@ UDPClientSocket.bind(("", lib.forwardingPort))
 
 lib.send_declaration(gatewayAddress, elementId, UDPClientSocket)
 
-time.sleep(5)
+time.sleep(2)
 
 payload = "Msg From Client".encode()
 destination = bytes.fromhex("FFEEDDCCBBAA")

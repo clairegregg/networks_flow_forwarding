@@ -24,5 +24,5 @@ while True:
     bytesAddressPair = UDPServerSocket.recvfrom(lib.bufferSize)
     message = bytesAddressPair[0]
     address = bytesAddressPair[1]
-    msg = "Message from client/worker: {}".format(message)
+    msg = "Message from client/worker at address {}: {}".format(hex(int.from_bytes(message[1+lib.lengthOfEndpointIdInBytes:1+lib.lengthOfEndpointIdInBytes+lib.lengthOfEndpointIdInBytes], 'big')),message[1+lib.lengthOfEndpointIdInBytes+lib.lengthOfEndpointIdInBytes:].decode())
     print(msg)

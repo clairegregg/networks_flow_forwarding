@@ -66,8 +66,11 @@ def node_has_2_indices(ip1: str, ip2: str, ipDictionary: dict, numNodes: multipr
     # Reassign the larger node's IP address to the smaller node.
     if ip1Index < ip2Index:
         combine_nodes(smallerIpNode=ip1Index, largerIpNode=ip2Index, largerIp=ip2, numNodes=numNodes)
+        return ip1Index
     elif ip2Index < ip1Index:
         combine_nodes(smallerIpNode=ip2Index, largerIpNode=ip1Index, largerIp=ip1, edges=edges, numNodes=numNodes)
+        return ip2Index
+    return ip1Index
     
 # This function adds a new node in the case a new forwarder has been declared.
 # Parameters:
@@ -84,20 +87,22 @@ def new_node(ip1: str, ip2: str, ipDictionary: dict, numNodes: multiprocessing.V
         nodeIndex = numNodes.value
         ipDictionary[ip1] = nodeIndex
         ipDictionary[ip2] = nodeIndex
+        return nodeIndex
     
     # Only one of them is in the dictionary, just add the other leading to the same node
     elif ip1 not in ipDictionary:
         nodeIndex = ipDictionary[ip2]
         ipDictionary[ip1] = nodeIndex
+        return nodeIndex
     elif ip2 not in ipDictionary:
         nodeIndex = ipDictionary[ip1]
         ipDictionary[ip2] = nodeIndex
+        return nodeIndex
 
     # Both are already in the dictionary, pointing to different nodes. In this case, they must be combined. 
-    else:
-        node_has_2_indices(ip1, ip2, ipDictionary, numNodes, edges)
+    return node_has_2_indices(ip1, ip2, ipDictionary, numNodes, edges)
 
-    return nodeIndex
+    
 
 # This creates a new temporary node with only 1 IP address. It is temporary as full nodes will be forwarders with 2 IP addresses.
 # Parameters:
