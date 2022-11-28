@@ -17,6 +17,7 @@ services:
             - controller
             - gateway_e1_to_isp
             - gateway_e2_to_isp
+            - gateway_e3_to_isp
             - gateway_isp_to_int
             - gateway_int_to_cloud
             - cloud_provider
@@ -34,6 +35,25 @@ services:
             - controller
             - gateway_e1_to_isp
             - gateway_e2_to_isp
+            - gateway_e3_to_isp
+            - gateway_isp_to_int
+            - gateway_int_to_cloud
+            - cloud_provider
+
+    employee3:
+        build:
+            dockerfile:
+                client/Dockerfile
+        # Appends the application id and gateway
+        command: ["AABBCCDDEEFA", "192.168.19.10"]
+        networks:
+            home3:
+                ipv4_address: 192.168.19.21
+        depends_on:
+            - controller
+            - gateway_e1_to_isp
+            - gateway_e2_to_isp
+            - gateway_e3_to_isp
             - gateway_isp_to_int
             - gateway_int_to_cloud
             - cloud_provider
@@ -51,6 +71,7 @@ services:
             - controller
             - gateway_e1_to_isp
             - gateway_e2_to_isp
+            - gateway_e3_to_isp
             - gateway_isp_to_int
             - gateway_int_to_cloud
 
@@ -59,7 +80,7 @@ services:
             dockerfile:
                 forwarders/Dockerfile
         # Appends any IP addresses this element can access
-        command: ["192.168.17.17","172.30.6.255","172.30.2.6"]
+        command: ["192.168.17.17","172.30.6.255","172.30.2.6","172.30.2.7"]
         networks:
             home1:
                 ipv4_address: 192.168.17.254
@@ -75,12 +96,28 @@ services:
             dockerfile:
                 forwarders/Dockerfile
         # Appends any IP addresses this element can access
-        command: ["192.168.18.19","172.30.6.255","172.30.8.45"]
+        command: ["192.168.18.19","172.30.6.255","172.30.8.45","172.30.2.7"]
         networks:
             home2:
                 ipv4_address: 192.168.18.254
             isp:
                 ipv4_address: 172.30.2.6
+        depends_on:
+            - tcpdump
+            - controller
+    
+
+    gateway_e3_to_isp:
+        build:
+            dockerfile:
+                forwarders/Dockerfile
+        # Appends any IP addresses this element can access
+        command: ["192.168.19.21","172.30.6.255","172.30.8.45","172.30.2.6"]
+        networks:
+            home3:
+                ipv4_address: 192.168.19.10
+            isp:
+                ipv4_address: 172.30.2.7
         depends_on:
             - tcpdump
             - controller
@@ -121,12 +158,14 @@ services:
         build:
             dockerfile:
                 controller/Dockerfile
-        command: ["192.168.17.2","192.168.18.2","172.30.0.2","10.30.0.2","172.20.0.2"]
+        command: ["192.168.17.2","192.168.18.2","192.168.19.2","172.30.0.2","10.30.0.2","172.20.0.2"]
         networks:
             home1:
                 ipv4_address: 192.168.17.2
             home2:
                 ipv4_address: 192.168.18.2
+            home3:
+                ipv4_address: 192.168.19.2
             isp:
                 ipv4_address: 172.30.0.2
             internet:
@@ -156,6 +195,12 @@ networks:
             driver: default
             config:
                 - subnet: 192.168.18.0/24
+    home3:
+        driver: bridge
+        ipam:
+            driver: default
+            config:
+                - subnet: 192.168.19.0/24
     isp:
         driver: bridge
         ipam:

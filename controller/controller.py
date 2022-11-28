@@ -67,7 +67,7 @@ def node_has_2_indices(ip1: str, ip2: str, ipDictionary: dict, numNodes: multipr
     if ip1Index < ip2Index:
         combine_nodes(smallerIpNode=ip1Index, largerIpNode=ip2Index, largerIp=ip2, numNodes=numNodes)
     elif ip2Index < ip1Index:
-        combine_nodes(smallerIpNode=ip2Index, largerIpNode=ip1Index, largerIp=ip1, numNodes=numNodes)
+        combine_nodes(smallerIpNode=ip2Index, largerIpNode=ip1Index, largerIp=ip1, edges=edges, numNodes=numNodes)
     
 # This function adds a new node in the case a new forwarder has been declared.
 # Parameters:

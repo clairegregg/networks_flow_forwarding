@@ -25,7 +25,4 @@ while True:
     message = bytesAddressPair[0]
     address = bytesAddressPair[1]
     msg = "Message from client/worker: {}".format(message)
-    IP = "Client/Worker IP address: {}".format(address)
-
     print(msg)
-    print(IP)
