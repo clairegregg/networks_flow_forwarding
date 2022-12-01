@@ -154,7 +154,6 @@ def deal_with_declaration(ipDictionary: dict, numNodes: multiprocessing.Value, e
         i += lib.lengthOfIpAddressInBytes
 
     graphVariablesLock.release()
-    #print("New forwarder at {} and {} can access {}".format(ip1, ip2, canAccess))
 
 # This adds an endpoint ID to the network after a message declaring it has been received.
 # The endpoint ID is assigned to the forwarder to which it was declared, as the endpoint is not connected to the controller.
@@ -173,7 +172,6 @@ def addId(ipDictionary: dict, graphVariablesLock: multiprocessing.Lock, message:
     index = ipDictionary[ipAddr]
     ipDictionary[newId] = index
     graphVariablesLock.release()
-    print("{} now also maps to {}".format(newId, index))
 
 # This finds the next node required to get to an endpoint from a given node, using the nextNodeMatrix made using the Floyd Warshall algorithm
 # Parameters:
@@ -311,7 +309,6 @@ def add_port(ipAddress: str, ipDictionary: dict, numNodes: list, edges: list, gr
     address = (ipAddress, lib.forwardingPort)
     sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
     sock.bind(address)
-    print("Controller has added a socket at {}".format(address))
     wait_for_request(sock, ipDictionary, numNodes, edges, graphVariablesLock, nextNodeMatrix, nextNodeMatrixLock, shortestPathCalculated)
 
 # Create all of the shared variables
@@ -329,6 +326,7 @@ for i in range(1,len(sys.argv)-1):
     process = multiprocessing.Process(target=add_port,args=(sys.argv[i], ipDictionary, numNodes, edges, graphVariablesLock, nextNodeMatrix, nextNodeMatrixLock, shortestPathCalculated))
     process.start()
 
+print("Controller up and listening on all ports")
 add_port(sys.argv[len(sys.argv)-1], ipDictionary, numNodes, edges, graphVariablesLock, nextNodeMatrix, nextNodeMatrixLock, shortestPathCalculated)
 
 

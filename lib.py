@@ -1,7 +1,6 @@
 import socket
 
 def send_declaration(gatewayAddress: tuple, elementId: bytes, sock: socket.socket):
-    print("Sending declaration to {}".format(gatewayAddress))
     header = int.to_bytes(1) + elementId
     sock.sendto(header, gatewayAddress)
 

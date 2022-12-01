@@ -133,7 +133,6 @@ def add_port_and_forward(givenIp, routingTable, routingTableLock):
     sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
     otherIP = lib.gateways[givenIp]
     sock.bind((otherIP, 54321))
-    print("Forwarder socket bound to {} up and listening".format(otherIP))
     controllerIp = declare_node(sock, routingTable, otherIP, givenIp)
     forward(sock, routingTable, routingTableLock, controllerIp, otherIP)
 
@@ -158,6 +157,6 @@ UDPForwarderSocket.bind(address)
 process = multiprocessing.Process(target=add_port_and_forward,args=(givenIp,routingTable, routingTableLock))
 process.start()
 
-print("Forwarder socket bound to {} up and listening".format(givenIp))
+print("Forwarder up and listening on both ports")
 
 forward(UDPForwarderSocket, routingTable, routingTableLock, find_controller(givenIp), givenIp)
