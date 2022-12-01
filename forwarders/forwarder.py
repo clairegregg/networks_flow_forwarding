@@ -109,7 +109,7 @@ def deal_with_recv(sock, routingTable, routingTableLock, controllerIp, ip, bytes
         msg = deal_with_declaration(routingTable, routingTableLock, message, address, ip)
         sock.sendto(msg, (controllerIp, lib.forwardingPort))
         return
-
+    
     destination = message[1:7]
     if destination not in routingTable:
         request_more_info(sock, routingTable, routingTableLock, controllerIp, ip)

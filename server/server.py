@@ -21,8 +21,9 @@ print("UDP server up and listening")
 
 # Listen for incoming messages
 while True:
-    bytesAddressPair = UDPServerSocket.recvfrom(lib.bufferSize)
-    message = bytesAddressPair[0]
-    address = bytesAddressPair[1]
-    msg = "Message from client/worker at address {}: {}".format(hex(int.from_bytes(message[1+lib.lengthOfEndpointIdInBytes:1+lib.lengthOfEndpointIdInBytes+lib.lengthOfEndpointIdInBytes], 'big')),message[1+lib.lengthOfEndpointIdInBytes+lib.lengthOfEndpointIdInBytes:].decode())
-    print(msg)
+    message = UDPServerSocket.recvfrom(lib.bufferSize)[0]
+    clientEndpointId = message[1+lib.lengthOfEndpointIdInBytes:1+lib.lengthOfEndpointIdInBytes+lib.lengthOfEndpointIdInBytes]
+    print("Message from client {}: {}".format(hex(int.from_bytes(clientEndpointId, 'big')),message[1+lib.lengthOfEndpointIdInBytes+lib.lengthOfEndpointIdInBytes:].decode()))
+    messageToSendBack = "Returning from server".encode()
+    lib.send_packet(gatewayAddress, elementId, clientEndpointId, UDPServerSocket, messageToSendBack)
+    print("Sent message from server to {}".format(clientEndpointId))

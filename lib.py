@@ -1,14 +1,16 @@
-def send_declaration(gatewayAddress, elementId, socket):
+import socket
+
+def send_declaration(gatewayAddress: tuple, elementId: bytes, sock: socket.socket):
     print("Sending declaration to {}".format(gatewayAddress))
     header = int.to_bytes(1) + elementId
-    socket.sendto(header, gatewayAddress)
+    sock.sendto(header, gatewayAddress)
 
-def send_packet(gatewayAddress, elementId, destinationId, socket, payload):
+def send_packet(gatewayAddress: tuple, elementId: bytes, destinationId: bytes, sock: socket.socket, payload: bytes):
     header = int.to_bytes(0) + destinationId + elementId
     bytesToSend = header + payload
-    socket.sendto(bytesToSend, gatewayAddress)
+    sock.sendto(bytesToSend, gatewayAddress)
 
-def ip_address_to_bytes(ipAddress):
+def ip_address_to_bytes(ipAddress: str):
     numbers = ipAddress.split(".")
     integers = [int(number) for number in numbers]
     bytes = b''
@@ -17,11 +19,16 @@ def ip_address_to_bytes(ipAddress):
         bytes += integer.to_bytes(1, 'big')
     return bytes
 
-def bytes_to_ip_address(bytes):
+def bytes_to_ip_address(bytes: bytes):
     ip = ""
     for byte in bytes:
         ip += str(byte) + "."
     return ip[:-1]
+
+def print_proxied_dict(dictionary: dict):
+    localDict = dict(dictionary)
+    for key in localDict:
+        print("{}:{}".format(key, localDict[key]))
 
 
 # check_if_in_same_network checks if two ip addresses share the same first <numFields> fields. 

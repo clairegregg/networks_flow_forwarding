@@ -65,7 +65,7 @@ def node_has_2_indices(ip1: str, ip2: str, ipDictionary: dict, numNodes: multipr
 
     # Reassign the larger node's IP address to the smaller node.
     if ip1Index < ip2Index:
-        combine_nodes(smallerIpNode=ip1Index, largerIpNode=ip2Index, largerIp=ip2, numNodes=numNodes)
+        combine_nodes(smallerIpNode=ip1Index, largerIpNode=ip2Index, largerIp=ip2, edges=edges, numNodes=numNodes)
         return ip1Index
     elif ip2Index < ip1Index:
         combine_nodes(smallerIpNode=ip2Index, largerIpNode=ip1Index, largerIp=ip1, edges=edges, numNodes=numNodes)
@@ -83,8 +83,8 @@ def new_node(ip1: str, ip2: str, ipDictionary: dict, numNodes: multiprocessing.V
     # Both ip addresses should lead to the same node. There are 4 cases to be dealt with
     # Neither in the dictionary, just add both leading to a new node!
     if ip1 not in ipDictionary and ip2 not in ipDictionary:
-        numNodes.value = numNodes.value + 1
         nodeIndex = numNodes.value
+        numNodes.value = numNodes.value + 1
         ipDictionary[ip1] = nodeIndex
         ipDictionary[ip2] = nodeIndex
         return nodeIndex
@@ -110,8 +110,8 @@ def new_node(ip1: str, ip2: str, ipDictionary: dict, numNodes: multiprocessing.V
 #   ipDictionary:   The dictionary from IP addresses (and endpoint IDs) to node indices.
 #   numNodes:       The number of nodes in the network.
 def new_temp_node(ip, ipDictionary, numNodes):
-    numNodes.value = numNodes.value + 1
     nodeIndex = numNodes.value
+    numNodes.value = numNodes.value + 1
     ipDictionary[ip] = nodeIndex
     return nodeIndex
 

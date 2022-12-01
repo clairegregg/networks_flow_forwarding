@@ -128,7 +128,7 @@ services:
             dockerfile:
                 forwarders/Dockerfile
         # Appends any IP addresses this element can access
-        command: ["172.30.8.45","10.30.4.244"]
+        command: ["172.30.8.45","10.30.4.244","172.30.2.6","172.30.2.7"]
         networks:
             isp:
                 ipv4_address: 172.30.6.255
