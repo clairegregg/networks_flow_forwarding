@@ -5,9 +5,9 @@ def send_declaration(gatewayAddress: tuple, elementId: bytes, sock: socket.socke
     header = int.to_bytes(1) + elementId
     sock.sendto(header, gatewayAddress)
 
-def send_packet(gatewayAddress: tuple, elementId: bytes, destinationId: bytes, sock: socket.socket, payload: bytes):
+def send_packet(gatewayAddress: tuple, elementId: bytes, destinationId: bytes, sock: socket.socket, actionId: int, payload: bytes):
     header = int.to_bytes(0) + destinationId + elementId
-    bytesToSend = header + payload
+    bytesToSend = header + actionId.to_bytes(1,'big') + payload
     sock.sendto(bytesToSend, gatewayAddress)
 
 def ip_address_to_bytes(ipAddress: str):
@@ -49,15 +49,22 @@ def check_if_in_same_network(ip1: str, ip2: str, numFields: int) -> bool:
 bufferSize = 1024
 forwardingPort = 54321
 
+newTicket = 0b1
+getTicket = 0b10
+solveTicket = 0b100
+
+lengthOfEndpointIdInBytes = 6
+lengthOfIpAddressInBytes = 4
+addressIndicesBegin = 1 + (2 * lengthOfIpAddressInBytes) # Each forwarder has 2 ip addresses (its own) before it shares what it can access
+
+actionIndex = 1 + (2 * lengthOfEndpointIdInBytes)
+
 # Variables for control messages
 controlByteIndex = 0
 declarationMask = 0b1
 newIdMask = 0b10
 reqUpdateMask = 0b100
 
-lengthOfEndpointIdInBytes = 6
-lengthOfIpAddressInBytes = 4
-addressIndicesBegin = 1 + (2 * lengthOfIpAddressInBytes) # Each forwarder has 2 ip addresses (its own) before it shares what it can access
 
 gateways = {
     "192.168.17.254" : "172.30.8.45",

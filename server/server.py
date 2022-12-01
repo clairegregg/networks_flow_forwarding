@@ -14,7 +14,8 @@ address = ("", lib.forwardingPort)
 
 UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 UDPServerSocket.bind(address)
-
+tickets = []
+nextTicketNumber = 1
 lib.send_declaration(gatewayAddress, elementId, UDPServerSocket)
 
 print("UDP server up and listening")
@@ -24,6 +25,14 @@ while True:
     message = UDPServerSocket.recvfrom(lib.bufferSize)[0]
     clientEndpointId = message[1+lib.lengthOfEndpointIdInBytes:1+lib.lengthOfEndpointIdInBytes+lib.lengthOfEndpointIdInBytes]
     print("Message from client {}: {}".format(hex(int.from_bytes(clientEndpointId, 'big')),message[1+lib.lengthOfEndpointIdInBytes+lib.lengthOfEndpointIdInBytes:].decode()))
-    messageToSendBack = "Returning from server".encode()
-    lib.send_packet(gatewayAddress, elementId, clientEndpointId, UDPServerSocket, messageToSendBack)
+    if message[lib.actionIndex] & lib.newTicket == lib.newTicket:
+        ticket = nextTicketNumber
+        nextTicketNumber += 1
+        if nextTicketNumber >= 256:
+            nextTicketNumber -= 256
+        tickets.append(ticket)
+        messageToSendBack = ticket.to_bytes(1, 'big') + "Sending new ticket number".encode()
+        lib.send_packet(gatewayAddress, elementId, clientEndpointId, UDPServerSocket, lib.newTicket, messageToSendBack) 
+
+    
     print("Sent message from server to {}".format(clientEndpointId))
