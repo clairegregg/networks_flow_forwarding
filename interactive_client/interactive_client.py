@@ -39,10 +39,28 @@ lib.send_declaration(gatewayAddress, elementId, UDPClientSocket)
 
 time.sleep(2)
 
-destination = random.choice(lib.destinations)
-new_ticket(UDPClientSocket, gatewayAddress, elementId, destination)
-recv(UDPClientSocket)
-get_ticket(UDPClientSocket, gatewayAddress, elementId, destination)
-ticket = recv(UDPClientSocket)
-solve_ticket(UDPClientSocket, gatewayAddress, elementId, destination, ticket[1])
-recv(UDPClientSocket)
+
+
+while True:
+    try:
+        val = input("Do you want to create a new ticket (1), get a ticket from a server (2), or solve a ticket (3)? (Stop by typing quit)")
+        if val == '1':
+            val = input("Which server do you want to request from? Index into the following: {}".format(lib.destinations))
+            destination = lib.destinations[int(val)]
+            new_ticket(UDPClientSocket, gatewayAddress, elementId, destination)
+            recv(UDPClientSocket)
+        elif val == '2':
+            val = input("Which server do you want to get the ticket from? Index into the following: {}".format(lib.destinations))
+            destination = lib.destinations[int(val)]
+            get_ticket(UDPClientSocket, gatewayAddress, elementId, destination)
+            recv(UDPClientSocket)
+        elif val == '3':
+            val = input("Which server do you want to get the ticket from? Index into the following: {}".format(lib.destinations))
+            destination = lib.destinations[int(val)]
+            ticket = int(input("What ticket number do you want to solve? Make sure you have already claimed any ticket you are trying to solve!"))
+            solve_ticket(UDPClientSocket, gatewayAddress, elementId, destination, ticket)
+            recv(UDPClientSocket)
+        elif val == 'quit':
+            break
+    except:
+        print("There was some error, try again")

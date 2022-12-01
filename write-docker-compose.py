@@ -7,17 +7,22 @@ employees = [
     ("employee3", "AABBCCDDEEFA", "192.168.19.10", "home3", "192.168.19.21")
 ]
 
+interactive_employees = [
+    # (name, id, gateway, network, ip address)
+    ("interactive_employee_4", "AABBBBBBBBBB", "192.168.19.10", "home3", "192.168.19.24")
+]
+
 servers = [
     # (name, id, gateway, network, ip address)
     ("cloud_server_1", "FFEEDDCCBBAA", "172.20.7.9", "cloud", "172.20.16.8"),
-    ("cloud_server_2", "FFFFFFFFFFFF", "172.20.7.11", "cloud", "172.20.16.8")
+    ("cloud_server_2", "FFFFFFFFFFFF", "172.20.7.9", "cloud", "172.20.10.11")
 ]
 
 gateways = [
     # (name, (network name, ip address in each network), ip addresses it has access to)
     ("gateway_e1_to_isp", ("home1", "192.168.17.254"), ("isp","172.30.8.45"), "192.168.17.17", "172.30.6.255", "172.30.2.6", "172.30.2.7"),
     ("gateway_e2_to_isp", ("home2", "192.168.18.254"), ("isp","172.30.2.6"), "192.168.18.19", "172.30.6.255", "172.30.8.45", "172.30.2.7"),
-    ("gateway_e3_to_isp", ("home3", "192.168.19.10"), ("isp","172.30.2.7"), "192.168.19.21", "172.30.6.255", "172.30.8.45", "172.30.2.6"),
+    ("gateway_e3_to_isp", ("home3", "192.168.19.10"), ("isp","172.30.2.7"), "192.168.19.21", "172.30.6.255", "172.30.8.45", "172.30.2.6", "192.168.19.21"),
     ("gateway_isp_to_int", ("isp","172.30.6.255"), ("internet","10.30.5.8"), "172.30.8.45", "10.30.4.244", "172.30.2.6","172.30.2.7"),
     ("gateway_int_to_cloud", ("internet", "10.30.4.244"), ("cloud", "172.20.7.9"), "10.30.5.8", "172.20.16.8", "172.20.7.11")
 ]
@@ -64,6 +69,33 @@ for employee in employees:
         output += "            - {}\n".format(gateway[0])
     for server in servers:
         output += "            - {}\n".format(server[0])
+
+ #############
+ ### USERS ###
+ #############
+
+for employee in interactive_employees:
+    output += """
+    {name}:
+        build:
+            dockerfile:
+                interactive_client/Dockerfile
+        # Appends the application id and gateway
+        command: ["{id}", "{gateway}"]
+        networks:
+            {network}:
+                ipv4_address: {ip}
+        depends_on:
+            - controller
+""".format(name = employee[0], id = employee[1], 
+            gateway = employee[2], network = employee[3], ip = employee[4])
+    for gateway in gateways:
+        output += "            - {}\n".format(gateway[0])
+    for server in servers:
+        output += "            - {}\n".format(server[0])
+    output += """        stdin_open: true
+        tty: true
+        """
 
  ###############
  ### SERVERS ###

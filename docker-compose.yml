@@ -20,7 +20,8 @@ services:
             - gateway_e3_to_isp
             - gateway_isp_to_int
             - gateway_int_to_cloud
-            - cloud_provider
+            - cloud_server_1
+            - cloud_server_2
 
     employee2:
         build:
@@ -38,7 +39,8 @@ services:
             - gateway_e3_to_isp
             - gateway_isp_to_int
             - gateway_int_to_cloud
-            - cloud_provider
+            - cloud_server_1
+            - cloud_server_2
 
     employee3:
         build:
@@ -56,9 +58,31 @@ services:
             - gateway_e3_to_isp
             - gateway_isp_to_int
             - gateway_int_to_cloud
-            - cloud_provider
+            - cloud_server_1
+            - cloud_server_2
 
-    cloud_provider:
+    interactive_employee_4:
+        build:
+            dockerfile:
+                interactive_client/Dockerfile
+        # Appends the application id and gateway
+        command: ["AABBBBBBBBBB", "192.168.19.10"]
+        networks:
+            home3:
+                ipv4_address: 192.168.19.24
+        depends_on:
+            - controller
+            - gateway_e1_to_isp
+            - gateway_e2_to_isp
+            - gateway_e3_to_isp
+            - gateway_isp_to_int
+            - gateway_int_to_cloud
+            - cloud_server_1
+            - cloud_server_2
+        stdin_open: true
+        tty: true
+        
+    cloud_server_1:
         build:
             dockerfile:
                 server/Dockerfile
@@ -67,6 +91,23 @@ services:
         networks:
             cloud:
                 ipv4_address: 172.20.16.8
+        depends_on:
+            - controller
+            - gateway_e1_to_isp
+            - gateway_e2_to_isp
+            - gateway_e3_to_isp
+            - gateway_isp_to_int
+            - gateway_int_to_cloud
+
+    cloud_server_2:
+        build:
+            dockerfile:
+                server/Dockerfile
+        # Appends the application id and gateway
+        command: ["FFFFFFFFFFFF", "172.20.7.9"]
+        networks:
+            cloud:
+                ipv4_address: 172.20.10.11
         depends_on:
             - controller
             - gateway_e1_to_isp
@@ -112,7 +153,7 @@ services:
             dockerfile:
                 forwarders/Dockerfile
         # Appends any IP addresses this element can access
-        command: ["192.168.19.21","172.30.6.255","172.30.8.45","172.30.2.6"]
+        command: ["192.168.19.21","172.30.6.255","172.30.8.45","172.30.2.6","192.168.19.21"]
         networks:
             home3:
                 ipv4_address: 192.168.19.10
@@ -144,7 +185,7 @@ services:
             dockerfile:
                 forwarders/Dockerfile
         # Appends any IP addresses this element can access
-        command: ["10.30.5.8","172.20.16.8"]
+        command: ["10.30.5.8","172.20.16.8","172.20.7.11"]
         networks:
             internet:
                 ipv4_address: 10.30.4.244

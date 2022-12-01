@@ -47,6 +47,7 @@ def check_if_in_same_network(ip1: str, ip2: str, numFields: int) -> bool:
 
 bufferSize = 1024
 forwardingPort = 54321
+destinations = [bytes.fromhex("FFEEDDCCBBAA"), bytes.fromhex("FFFFFFFFFFFF")]
 
 newTicket = 0b1
 getTicket = 0b10
