@@ -9,7 +9,8 @@ employees = [
 
 servers = [
     # (name, id, gateway, network, ip address)
-    ("cloud_provider", "FFEEDDCCBBAA", "172.20.7.9", "cloud", "172.20.16.8")
+    ("cloud_server_1", "FFEEDDCCBBAA", "172.20.7.9", "cloud", "172.20.16.8"),
+    ("cloud_server_2", "FFFFFFFFFFFF", "172.20.7.11", "cloud", "172.20.16.8")
 ]
 
 gateways = [
@@ -18,7 +19,7 @@ gateways = [
     ("gateway_e2_to_isp", ("home2", "192.168.18.254"), ("isp","172.30.2.6"), "192.168.18.19", "172.30.6.255", "172.30.8.45", "172.30.2.7"),
     ("gateway_e3_to_isp", ("home3", "192.168.19.10"), ("isp","172.30.2.7"), "192.168.19.21", "172.30.6.255", "172.30.8.45", "172.30.2.6"),
     ("gateway_isp_to_int", ("isp","172.30.6.255"), ("internet","10.30.5.8"), "172.30.8.45", "10.30.4.244", "172.30.2.6","172.30.2.7"),
-    ("gateway_int_to_cloud", ("internet", "10.30.4.244"), ("cloud", "172.20.7.9"), "10.30.5.8", "172.20.16.8")
+    ("gateway_int_to_cloud", ("internet", "10.30.4.244"), ("cloud", "172.20.7.9"), "10.30.5.8", "172.20.16.8", "172.20.7.11")
 ]
 
  # ip address in each network in order

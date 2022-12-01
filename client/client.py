@@ -3,6 +3,7 @@ import socket
 import sys
 import lib
 import time
+import random
 
 def new_ticket(sock, gatewayAddress, elementId, destination):
     payload = "Employee requesting new ticket number".encode()
@@ -38,7 +39,8 @@ lib.send_declaration(gatewayAddress, elementId, UDPClientSocket)
 
 time.sleep(2)
 
-destination = bytes.fromhex("FFEEDDCCBBAA")
+destinations = [bytes.fromhex("FFEEDDCCBBAA"), bytes.fromhex("FFFFFFFFFFFF")]
+destination = random.choice(destinations)
 new_ticket(UDPClientSocket, gatewayAddress, elementId, destination)
 recv(UDPClientSocket)
 get_ticket(UDPClientSocket, gatewayAddress, elementId, destination)
